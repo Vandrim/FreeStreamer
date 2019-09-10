@@ -414,13 +414,13 @@ public:
         [fsAudioStreamPrivateActiveSessions removeObjectForKey:[NSNumber numberWithUnsignedLong:(unsigned long)self]];
         
         if ([fsAudioStreamPrivateActiveSessions count] == 0) {
-            if (self.configuration.automaticAudioSessionHandlingEnabled) {
-#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
-                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
-#else
-                [[AVAudioSession sharedInstance] setActive:NO error:nil];
-#endif
-            }
+//            if (self.configuration.automaticAudioSessionHandlingEnabled) {
+//#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
+//                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
+//#else
+//                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+//#endif
+//            }
         }
     }
 #endif
@@ -816,13 +816,13 @@ public:
         [fsAudioStreamPrivateActiveSessions removeObjectForKey:[NSNumber numberWithUnsignedLong:(unsigned long)self]];
         
         if ([fsAudioStreamPrivateActiveSessions count] == 0) {
-            if (self.configuration.automaticAudioSessionHandlingEnabled) {
-#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
-                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
-#else
-                [[AVAudioSession sharedInstance] setActive:NO error:nil];
-#endif
-            }
+//            if (self.configuration.automaticAudioSessionHandlingEnabled) {
+//#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
+//                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
+//#else
+//                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+//#endif
+//            }
         }
     }
 #endif
@@ -879,13 +879,13 @@ public:
         [fsAudioStreamPrivateActiveSessions removeObjectForKey:[NSNumber numberWithUnsignedLong:(unsigned long)self]];
         
         if ([fsAudioStreamPrivateActiveSessions count] == 0) {
-            if (self.configuration.automaticAudioSessionHandlingEnabled) {
-#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
-                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
-#else
-                [[AVAudioSession sharedInstance] setActive:NO error:nil];
-#endif
-            }
+//            if (self.configuration.automaticAudioSessionHandlingEnabled) {
+//#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
+//                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
+//#else
+//                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+//#endif
+//            }
         }
     }
 #endif
