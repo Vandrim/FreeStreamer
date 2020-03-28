@@ -77,7 +77,7 @@ static NSInteger sortCacheObjects(id co1, id co2, void *keyForSorting)
 #else
         [systemVersion appendString:@"OS X"];
 #endif
-
+        
         self.bufferCount    = 64;
         self.bufferSize     = 8192;
         self.maxPacketDescs = 512;
@@ -126,17 +126,17 @@ static NSInteger sortCacheObjects(id co1, id co2, void *keyForSorting)
             self.outputNumChannels = channels;
         }
 #endif
-            
+        
 #if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 40000)
         /* iOS */
-            
-#else
-            /* OS X */
-            
-            self.requiredPrebufferSizeInSeconds = 3;
         
-            // No need to be so concervative with the cache sizes
-            self.maxPrebufferedByteCount = 16000000; // 16 MB
+#else
+        /* OS X */
+        
+        self.requiredPrebufferSizeInSeconds = 3;
+        
+        // No need to be so concervative with the cache sizes
+        self.maxPrebufferedByteCount = 16000000; // 16 MB
 #endif
     }
     
@@ -161,10 +161,10 @@ static NSDateFormatter *statisticsDateFormatter = nil;
 - (NSString *)description
 {
     return [[NSString alloc] initWithFormat:@"%@\t%lu\t%lu\t%lu",
-                self.snapshotTimeFormatted,
-                (unsigned long)self.audioStreamPacketCount,
-                (unsigned long)self.audioQueueUsedBufferCount,
-                (unsigned long)self.audioQueuePCMPacketQueueCount];
+            self.snapshotTimeFormatted,
+            (unsigned long)self.audioStreamPacketCount,
+            (unsigned long)self.audioQueueUsedBufferCount,
+            (unsigned long)self.audioQueuePCMPacketQueueCount];
 }
 
 @end
@@ -211,7 +211,7 @@ public:
 @interface FSAudioStreamPrivate : NSObject {
     astreamer::Audio_Stream *_audioStream;
     NSURL *_url;
-	AudioStreamStateObserver *_observer;
+    AudioStreamStateObserver *_observer;
     NSString *_defaultContentType;
     Reachability *_reachability;
     FSSeekByteOffset _lastSeekByteOffset;
@@ -302,10 +302,10 @@ public:
         
         _observer = new AudioStreamStateObserver();
         _observer->priv = self;
-       
+        
         _audioStream = new astreamer::Audio_Stream();
         _observer->source = _audioStream;
-
+        
         _audioStream->m_delegate = _observer;
         
         _reachability = nil;
@@ -318,7 +318,7 @@ public:
                                                  selector:@selector(reachabilityChanged:)
                                                      name:kReachabilityChangedNotification
                                                    object:nil];
-
+        
 #if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 40000)
         _backgroundTask = UIBackgroundTaskInvalid;
         
@@ -402,7 +402,7 @@ public:
             continue;
         }
         totalCacheSize -= [cachedMetaData fileSize];
-                
+        
         if (![[NSFileManager defaultManager] removeItemAtPath:cacheObj.path error:nil]) {
             continue;
         }
@@ -414,13 +414,13 @@ public:
         [fsAudioStreamPrivateActiveSessions removeObjectForKey:[NSNumber numberWithUnsignedLong:(unsigned long)self]];
         
         if ([fsAudioStreamPrivateActiveSessions count] == 0) {
-//            if (self.configuration.automaticAudioSessionHandlingEnabled) {
-//#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
-//                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
-//#else
-//                [[AVAudioSession sharedInstance] setActive:NO error:nil];
-//#endif
-//            }
+            //            if (self.configuration.automaticAudioSessionHandlingEnabled) {
+            //#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
+            //                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
+            //#else
+            //                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+            //#endif
+            //            }
         }
     }
 #endif
@@ -484,8 +484,8 @@ public:
 
 - (void)playFromURL:(NSURL*)url
 {
-   [self setUrl:url];
-   [self play];
+    [self setUrl:url];
+    [self play];
 }
 
 - (void)playFromOffset:(FSSeekByteOffset)offset
@@ -694,7 +694,7 @@ public:
     if (c->predefinedHttpHeaderValues) {
         config.predefinedHttpHeaderValues = (__bridge_transfer NSDictionary *)CFDictionaryCreateCopy(kCFAllocatorDefault, c->predefinedHttpHeaderValues);
     }
-
+    
     return config;
 }
 
@@ -748,65 +748,69 @@ public:
 {
     NSAssert([NSThread isMainThread], @"FSAudioStreamPrivate.interruptionOccurred needs to be called in the main thread");
     
-#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
-    NSNumber *interruptionType = [[notification userInfo] valueForKey:AVAudioSessionInterruptionTypeKey];
-    NSNumber *interruptionResume = [[notification userInfo] valueForKey:AVAudioSessionInterruptionOptionKey];
-    if ([interruptionType intValue] == AVAudioSessionInterruptionTypeBegan) {
-        if ([self isPlaying] && !_wasPaused) {
-            self.wasInterrupted = YES;
-            // Continuous streams do not have a duration.
-            self.wasContinuousStream = !([self durationInSeconds] > 0);
-            
-            if (self.wasContinuousStream) {
-#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
-                NSLog(@"FSAudioStream: Interruption began. Continuous stream. Stopping the stream.");
-#endif
-                [self stop];
-            } else {
-#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
-                NSLog(@"FSAudioStream: Interruption began. Non-continuous stream. Stopping the stream and saving the offset.");
-#endif
-                _lastSeekByteOffset = [self currentSeekByteOffset];
-                [self stop];
-            }
-        }
-    } else if ([interruptionType intValue] == AVAudioSessionInterruptionTypeEnded) {
-        if (self.wasInterrupted) {
-            self.wasInterrupted = NO;
-            
-            if ([interruptionResume intValue] == AVAudioSessionInterruptionOptionShouldResume) {
-                @synchronized (self) {
-                    if (self.configuration.automaticAudioSessionHandlingEnabled) {
-                        [[AVAudioSession sharedInstance] setActive:YES error:nil];
-                    }
-                    fsAudioStreamPrivateActiveSessions[[NSNumber numberWithUnsignedLong:(unsigned long)self]] = @"";
-                }
-                
-                if (self.wasContinuousStream) {
-#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
-                    NSLog(@"FSAudioStream: Interruption ended. Continuous stream. Starting the playback.");
-#endif
-                    /*
-                     * Resume playing.
-                     */
-                    [self play];
-                } else {
-#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
-                    NSLog(@"FSAudioStream: Interruption ended. Continuous stream. Playing from the offset");
-#endif
-                    /*
-                     * Resume playing.
-                     */
-                   [self playFromOffset:_lastSeekByteOffset];
-                }
-            } else {
-#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
-                NSLog(@"FSAudioStream: Interruption ended. Continuous stream. Not resuming.");
-#endif
-            }
-        }
-    }
-#endif
+    //被打断直接暂停
+    [self pause]; return;
+    
+    //源码
+    //#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
+    //    NSNumber *interruptionType = [[notification userInfo] valueForKey:AVAudioSessionInterruptionTypeKey];
+    //    NSNumber *interruptionResume = [[notification userInfo] valueForKey:AVAudioSessionInterruptionOptionKey];
+    //    if ([interruptionType intValue] == AVAudioSessionInterruptionTypeBegan) {
+    //        if ([self isPlaying] && !_wasPaused) {
+    //            self.wasInterrupted = YES;
+    //            // Continuous streams do not have a duration.
+    //            self.wasContinuousStream = !([self durationInSeconds] > 0);
+    //
+    //            if (self.wasContinuousStream) {
+    //#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
+    //                NSLog(@"FSAudioStream: Interruption began. Continuous stream. Stopping the stream.");
+    //#endif
+    //                [self stop];
+    //            } else {
+    //#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
+    //                NSLog(@"FSAudioStream: Interruption began. Non-continuous stream. Stopping the stream and saving the offset.");
+    //#endif
+    //                _lastSeekByteOffset = [self currentSeekByteOffset];
+    //                [self stop];
+    //            }
+    //        //}
+    //    } else if ([interruptionType intValue] == AVAudioSessionInterruptionTypeEnded) {
+    //        if (self.wasInterrupted) {
+    //            self.wasInterrupted = NO;
+    //
+    //            if ([interruptionResume intValue] == AVAudioSessionInterruptionOptionShouldResume) {
+    //                @synchronized (self) {
+    //                    if (self.configuration.automaticAudioSessionHandlingEnabled) {
+    //                        [[AVAudioSession sharedInstance] setActive:YES error:nil];
+    //                    }
+    //                    fsAudioStreamPrivateActiveSessions[[NSNumber numberWithUnsignedLong:(unsigned long)self]] = @"";
+    //                }
+    //
+    //                if (self.wasContinuousStream) {
+    //#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
+    //                    NSLog(@"FSAudioStream: Interruption ended. Continuous stream. Starting the playback.");
+    //#endif
+    //                    /*
+    //                     * Resume playing.
+    //                     */
+    //                    [self play];
+    //                } else {
+    //#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
+    //                    NSLog(@"FSAudioStream: Interruption ended. Continuous stream. Playing from the offset");
+    //#endif
+    //                    /*
+    //                     * Resume playing.
+    //                     */
+    //                   [self playFromOffset:_lastSeekByteOffset];
+    //                }
+    //            } else {
+    //#if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
+    //                NSLog(@"FSAudioStream: Interruption ended. Continuous stream. Not resuming.");
+    //#endif
+    //            }
+    //        }
+    //    }
+    //#endif
 }
 
 - (void)notifyPlaybackStopped
@@ -816,13 +820,13 @@ public:
         [fsAudioStreamPrivateActiveSessions removeObjectForKey:[NSNumber numberWithUnsignedLong:(unsigned long)self]];
         
         if ([fsAudioStreamPrivateActiveSessions count] == 0) {
-//            if (self.configuration.automaticAudioSessionHandlingEnabled) {
-//#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
-//                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
-//#else
-//                [[AVAudioSession sharedInstance] setActive:NO error:nil];
-//#endif
-//            }
+            //            if (self.configuration.automaticAudioSessionHandlingEnabled) {
+            //#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
+            //                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
+            //#else
+            //                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+            //#endif
+            //            }
         }
     }
 #endif
@@ -879,13 +883,13 @@ public:
         [fsAudioStreamPrivateActiveSessions removeObjectForKey:[NSNumber numberWithUnsignedLong:(unsigned long)self]];
         
         if ([fsAudioStreamPrivateActiveSessions count] == 0) {
-//            if (self.configuration.automaticAudioSessionHandlingEnabled) {
-//#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
-//                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
-//#else
-//                [[AVAudioSession sharedInstance] setActive:NO error:nil];
-//#endif
-//            }
+            //            if (self.configuration.automaticAudioSessionHandlingEnabled) {
+            //#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
+            //                [[AVAudioSession sharedInstance] setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
+            //#else
+            //                [[AVAudioSession sharedInstance] setActive:NO error:nil];
+            //#endif
+            //            }
         }
     }
 #endif
@@ -1014,7 +1018,7 @@ public:
 - (void)play
 {
     _wasPaused = NO;
-
+    
     if (_audioStream->isPreloading()) {
         _audioStream->startCachedDataPlayback();
         
@@ -1030,7 +1034,7 @@ public:
 #endif
     
     _audioStream->open();
-
+    
     if (!_reachability) {
         _reachability = [Reachability reachabilityForInternetConnection];
         
@@ -1103,7 +1107,7 @@ public:
         if ([file hasPrefix:@"FSCache-"]) {
             NSString *fullPath = [NSString stringWithFormat:@"%@/%@", self.configuration.cacheDirectory, file];
             NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:nil];
-        
+            
             totalCacheSize += [[attributes objectForKey:NSFileSize] longLongValue];
         }
     }
@@ -1171,7 +1175,7 @@ public:
     // Update the configuration
     self.configuration.requiredInitialPrebufferedByteCountForContinuousStream = bufferSize;
     self.configuration.requiredInitialPrebufferedByteCountForNonContinuousStream = bufferSize;
-
+    
     astreamer::Stream_Configuration *c = astreamer::Stream_Configuration::configuration();
     
     c->requiredInitialPrebufferedByteCountForContinuousStream = bufferSize;
@@ -1420,7 +1424,7 @@ public:
 {
     NSAssert([NSThread isMainThread], @"FSAudioStream.play needs to be called in the main thread");
     
-    [_private play];   
+    [_private play];
 }
 
 - (void)playFromURL:(NSURL*)url
@@ -1531,15 +1535,15 @@ public:
     if (pos.playbackTimeInSeconds > 0) {
         unsigned u = pos.playbackTimeInSeconds;
         unsigned s,m;
-    
+        
         s = u % 60;
         u /= 60;
         m = u;
-    
+        
         pos.minute = m;
         pos.second = s;
     }
-
+    
     return pos;
 }
 
@@ -1557,9 +1561,9 @@ public:
     
     if (durationInSeconds > 0) {
         unsigned u = durationInSeconds;
-    
+        
         unsigned s,m;
-    
+        
         s = u % 60;
         u /= 60;
         m = u;
@@ -1567,9 +1571,9 @@ public:
         pos.minute = m;
         pos.second = s;
     }
-
+    
     pos.playbackTimeInSeconds = durationInSeconds;
-
+    
     return pos;
 }
 
@@ -1764,7 +1768,7 @@ void AudioStreamStateObserver::audioStreamErrorOccurred(int errorCode, CFStringR
             break;
         case kFsAudioStreamErrorNetwork:
             error = kFsAudioStreamErrorNetwork;
-        
+            
 #if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
             NSLog(@"FSAudioStream: Network error: %@ %@", errorForObjC, priv);
 #endif
@@ -1772,7 +1776,7 @@ void AudioStreamStateObserver::audioStreamErrorOccurred(int errorCode, CFStringR
             break;
         case kFsAudioStreamErrorUnsupportedFormat:
             error = kFsAudioStreamErrorUnsupportedFormat;
-    
+            
 #if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
             NSLog(@"FSAudioStream: Unsupported format error: %@ %@", errorForObjC, priv);
 #endif
@@ -1805,8 +1809,8 @@ void AudioStreamStateObserver::audioStreamErrorOccurred(int errorCode, CFStringR
     }
     
     NSDictionary *userInfo = @{FSAudioStreamNotificationKey_Error: @(errorCode),
-                            FSAudioStreamNotificationKey_ErrorDescription: errorForObjC,
-                              FSAudioStreamNotificationKey_Stream: [NSValue valueWithPointer:source]};
+                               FSAudioStreamNotificationKey_ErrorDescription: errorForObjC,
+                               FSAudioStreamNotificationKey_Stream: [NSValue valueWithPointer:source]};
     NSNotification *notification = [NSNotification notificationWithName:FSAudioStreamErrorNotification object:priv.stream userInfo:userInfo];
     
     [[NSNotificationCenter defaultCenter] postNotification:notification];
@@ -1821,7 +1825,7 @@ void AudioStreamStateObserver::audioStreamErrorOccurred(int errorCode, CFStringR
         }
     }
 }
-    
+
 void AudioStreamStateObserver::audioStreamStateChanged(astreamer::Audio_Stream::State state)
 {
     SEL notificationHandler;
@@ -1869,7 +1873,7 @@ void AudioStreamStateObserver::audioStreamStateChanged(astreamer::Audio_Stream::
                                    userInfo:nil
                                     repeats:NO];
 }
-    
+
 void AudioStreamStateObserver::audioStreamMetaDataAvailable(std::map<CFStringRef,CFStringRef> metaData)
 {
     NSMutableDictionary *metaDataDictionary = [[NSMutableDictionary alloc] init];
@@ -1886,7 +1890,7 @@ void AudioStreamStateObserver::audioStreamMetaDataAvailable(std::map<CFStringRef
     }
     
     NSDictionary *userInfo = @{FSAudioStreamNotificationKey_MetaData: metaDataDictionary,
-                              FSAudioStreamNotificationKey_Stream: [NSValue valueWithPointer:source]};
+                               FSAudioStreamNotificationKey_Stream: [NSValue valueWithPointer:source]};
     NSNotification *notification = [NSNotification notificationWithName:FSAudioStreamMetaDataNotification object:priv.stream userInfo:userInfo];
     
     [[NSNotificationCenter defaultCenter] postNotification:notification];
@@ -1894,6 +1898,7 @@ void AudioStreamStateObserver::audioStreamMetaDataAvailable(std::map<CFStringRef
 
 void AudioStreamStateObserver::samplesAvailable(AudioBufferList *samples, UInt32 frames, AudioStreamPacketDescription description)
 {
+    //NSLog(@"FSAudioStream 中断");
     if ([priv.delegate respondsToSelector:@selector(audioStream:samplesAvailable:frames:description:)]) {
         [priv.delegate audioStream:priv.stream samplesAvailable:samples frames:frames description:description];
     }
@@ -1903,3 +1908,4 @@ void AudioStreamStateObserver::bitrateAvailable()
 {
     [priv bitrateAvailable];
 }
+
